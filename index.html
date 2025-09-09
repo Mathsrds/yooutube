@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Loop Player</title>
+  <title>YouTube Live Loop Player</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -34,6 +34,102 @@
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      font-size: 1rem;
+    }
+    button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background: #cc0000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #a00000;
+    }
+    iframe {
+      margin-top: 20px;
+      width: 100%;
+      height: 450px;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    #status {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <header>YouTube Live Loop Player</header>
+  <main>
+    <p>Cole o link de uma live do YouTube. Ela será assistida em blocos de tempo aleatórios entre 20 e 60 minutos:</p>
+    <input type="text" id="youtubeLink" placeholder="Cole o link aqui...">
+    <button onclick="playVideo()">Assistir</button>
+    <div id="player"></div>
+    <p id="status"></p>
+  </main>
+
+  <script>
+    let videoId = null;
+    let timeoutId = null;
+
+    function getVideoId(url) {
+      let vId = null;
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes("youtube.com")) {
+          vId = urlObj.searchParams.get("v");
+        } else if (urlObj.hostname.includes("youtu.be")) {
+          vId = urlObj.pathname.slice(1);
+        }
+      } catch (e) {
+        alert("Por favor, insira um link válido do YouTube.");
+      }
+      return vId;
+    }
+
+    function playVideo() {
+      const link = document.getElementById("youtubeLink").value;
+      videoId = getVideoId(link);
+
+      if (videoId) {
+        loadVideoWithRandomTime();
+      } else {
+        alert("Link inválido! Tente novamente.");
+      }
+    }
+
+    function loadVideoWithRandomTime() {
+      if (!videoId) return;
+
+      // Tempo aleatório entre 20 e 60 minutos (ideal para lives)
+      const min = 20;
+      const max = 60;
+      const minutes = Math.floor(Math.random() * (max - min + 1)) + min;
+      const durationMs = minutes * 60 * 1000;
+
+      // Atualiza status
+      document.getElementById("status").innerText =
+        `Assistindo por ~${minutes} minuto(s)...`;
+
+      // Carrega player
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      document.getElementById("player").innerHTML = `
+        <iframe src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      `;
+
+      // Recarrega automaticamente após o tempo sorteado
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(loadVideoWithRandomTime, durationMs);
+    }
+  </script>
+</body>
+</html>
       font-size: 1rem;
     }
     button {
