@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Live Loop Player</title>
+  <title>YouTube Live Loop Player Avançado</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -29,16 +29,19 @@
       width: 90%;
       max-width: 800px;
     }
-    input {
-      width: 70%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+    input, label {
       font-size: 1rem;
+    }
+    input[type="text"], input[type="number"] {
+      width: 60%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
     button {
       padding: 10px 20px;
-      margin-left: 10px;
+      margin: 10px 0;
       background: #cc0000;
       color: white;
       border: none;
@@ -57,26 +60,46 @@
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    #status {
-      margin-top: 15px;
-      font-size: 0.9rem;
-      color: #444;
+    #status, #counter {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    .config {
+      margin: 10px 0;
+      text-align: left;
     }
   </style>
 </head>
 <body>
-  <header>YouTube Live Loop Player</header>
+  <header>YouTube Live Loop Player Avançado</header>
   <main>
-    <p>Cole o link de uma live do YouTube. Ela será assistida em blocos de tempo aleatórios entre 20 e 60 minutos:</p>
+    <p>Cole o link de uma live do YouTube e configure os intervalos de visualização e pausa:</p>
     <input type="text" id="youtubeLink" placeholder="Cole o link aqui...">
+    
+    <div class="config">
+      <label>Tempo mínimo de visualização (minutos): </label>
+      <input type="number" id="minView" value="20" min="1"><br>
+      <label>Tempo máximo de visualização (minutos): </label>
+      <input type="number" id="maxView" value="60" min="1"><br>
+      <label>Tempo mínimo de pausa (minutos): </label>
+      <input type="number" id="minPause" value="1" min="0"><br>
+      <label>Tempo máximo de pausa (minutos): </label>
+      <input type="number" id="maxPause" value="5" min="0">
+    </div>
+
     <button onclick="playVideo()">Assistir</button>
     <div id="player"></div>
     <p id="status"></p>
+    <p id="counter">Visualizações simuladas: 0</p>
   </main>
 
   <script>
     let videoId = null;
     let timeoutId = null;
+    let simulatedViews = parseInt(localStorage.getItem('simulatedViews')) || 0;
+
+    document.getElementById("counter").innerText = `Visualizações simuladas: ${simulatedViews}`;
 
     function getVideoId(url) {
       let vId = null;
@@ -98,100 +121,58 @@
       videoId = getVideoId(link);
 
       if (videoId) {
-        loadVideoWithRandomTime();
+        // Inicia a primeira sessão com atraso aleatório (0-2 min) para parecer natural
+        const initialDelay = Math.floor(Math.random() * 120000); 
+        setTimeout(startViewingSession, initialDelay);
       } else {
         alert("Link inválido! Tente novamente.");
       }
     }
 
-    function loadVideoWithRandomTime() {
+    function startViewingSession() {
       if (!videoId) return;
 
-      // Tempo aleatório entre 20 e 60 minutos (ideal para lives)
-      const min = 20;
-      const max = 60;
-      const minutes = Math.floor(Math.random() * (max - min + 1)) + min;
-      const durationMs = minutes * 60 * 1000;
+      // Pega valores da interface
+      const minView = parseInt(document.getElementById("minView").value);
+      const maxView = parseInt(document.getElementById("maxView").value);
+      const minPause = parseInt(document.getElementById("minPause").value);
+      const maxPause = parseInt(document.getElementById("maxPause").value);
+
+      // Tempo aleatório de visualização
+      const minutesView = Math.floor(Math.random() * (maxView - minView + 1)) + minView;
+      const durationMs = minutesView * 60 * 1000;
 
       // Atualiza status
-      document.getElementById("status").innerText =
-        `Assistindo por ~${minutes} minuto(s)...`;
+      document.getElementById("status").innerText = `📺 Assistindo por ~${minutesView} minuto(s)...`;
 
       // Carrega player
       const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-      document.getElementById("player").innerHTML = `
-        <iframe src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-      `;
+      document.getElementById("player").innerHTML = `<iframe src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
 
-      // Recarrega automaticamente após o tempo sorteado
+      // Agenda pausa
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(loadVideoWithRandomTime, durationMs);
-    }
-  </script>
-</body>
-</html>
-      font-size: 1rem;
-    }
-    button {
-      padding: 10px 20px;
-      margin-left: 10px;
-      background: #cc0000;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #a00000;
-    }
-    iframe {
-      margin-top: 20px;
-      width: 100%;
-      height: 450px;
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-  </style>
-</head>
-<body>
-  <header>YouTube Loop Player</header>
-  <main>
-    <p>Cole o link de um vídeo ou transmissão do YouTube para assistir em loop:</p>
-    <input type="text" id="youtubeLink" placeholder="Cole o link aqui...">
-    <button onclick="playVideo()">Assistir</button>
-    <div id="player"></div>
-  </main>
-
-  <script>
-    function getVideoId(url) {
-      let videoId = null;
-      try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname.includes("youtube.com")) {
-          videoId = urlObj.searchParams.get("v");
-        } else if (urlObj.hostname.includes("youtu.be")) {
-          videoId = urlObj.pathname.slice(1);
-        }
-      } catch (e) {
-        alert("Por favor, insira um link válido do YouTube.");
-      }
-      return videoId;
+      timeoutId = setTimeout(() => startPause(minPause, maxPause), durationMs);
     }
 
-    function playVideo() {
-      const link = document.getElementById("youtubeLink").value;
-      const videoId = getVideoId(link);
+    function startPause(minPause, maxPause) {
+      // Incrementa visualizações simuladas
+      simulatedViews++;
+      localStorage.setItem('simulatedViews', simulatedViews);
+      document.getElementById("counter").innerText = `Visualizações simuladas: ${simulatedViews}`;
 
-      if (videoId) {
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
-        document.getElementById("player").innerHTML = `
-          <iframe src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        `;
-      } else {
-        alert("Link inválido! Tente novamente.");
-      }
+      // Tempo aleatório de pausa
+      const minutesPause = Math.floor(Math.random() * (maxPause - minPause + 1)) + minPause;
+      const pauseMs = minutesPause * 60 * 1000;
+
+      // Mostra status de pausa
+      document.getElementById("status").innerText = `⏸️ Pausado por ~${minutesPause} minuto(s)...`;
+
+      // Remove player
+      document.getElementById("player").innerHTML = "";
+
+      // Após a pausa, inicia nova sessão
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(startViewingSession, pauseMs);
     }
   </script>
 </body>
