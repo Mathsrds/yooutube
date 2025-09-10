@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Live Loop Player Avançado</title>
+  <title>YouTube Loop Player Avançado</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -72,9 +72,9 @@
   </style>
 </head>
 <body>
-  <header>YouTube Live Loop Player Avançado</header>
+  <header>YouTube Loop Player Avançado</header>
   <main>
-    <p>Cole o link de uma live do YouTube e configure os intervalos de visualização e pausa:</p>
+    <p>Cole o link de um vídeo, live ou Short do YouTube e configure os intervalos de visualização e pausa:</p>
     <input type="text" id="youtubeLink" placeholder="Cole o link aqui...">
     
     <div class="config">
@@ -98,7 +98,6 @@
     let videoId = null;
     let timeoutId = null;
     let simulatedViews = parseInt(localStorage.getItem('simulatedViews')) || 0;
-
     document.getElementById("counter").innerText = `Visualizações simuladas: ${simulatedViews}`;
 
     function getVideoId(url) {
@@ -106,9 +105,13 @@
       try {
         const urlObj = new URL(url);
         if (urlObj.hostname.includes("youtube.com")) {
-          vId = urlObj.searchParams.get("v");
+          if (urlObj.pathname.startsWith("/shorts/")) {
+            vId = urlObj.pathname.split("/")[2]; // ID do Short
+          } else {
+            vId = urlObj.searchParams.get("v"); // Vídeo normal
+          }
         } else if (urlObj.hostname.includes("youtu.be")) {
-          vId = urlObj.pathname.slice(1);
+          vId = urlObj.pathname.slice(1); // link curto
         }
       } catch (e) {
         alert("Por favor, insira um link válido do YouTube.");
@@ -121,8 +124,8 @@
       videoId = getVideoId(link);
 
       if (videoId) {
-        // Inicia a primeira sessão com atraso aleatório (0-2 min) para parecer natural
-        const initialDelay = Math.floor(Math.random() * 120000); 
+        // Delay inicial aleatório 0–2 min para parecer natural
+        const initialDelay = Math.floor(Math.random() * 120000);
         setTimeout(startViewingSession, initialDelay);
       } else {
         alert("Link inválido! Tente novamente.");
@@ -132,7 +135,6 @@
     function startViewingSession() {
       if (!videoId) return;
 
-      // Pega valores da interface
       const minView = parseInt(document.getElementById("minView").value);
       const maxView = parseInt(document.getElementById("maxView").value);
       const minPause = parseInt(document.getElementById("minPause").value);
@@ -155,7 +157,7 @@
     }
 
     function startPause(minPause, maxPause) {
-      // Incrementa visualizações simuladas
+      // Incrementa contador
       simulatedViews++;
       localStorage.setItem('simulatedViews', simulatedViews);
       document.getElementById("counter").innerText = `Visualizações simuladas: ${simulatedViews}`;
@@ -164,13 +166,13 @@
       const minutesPause = Math.floor(Math.random() * (maxPause - minPause + 1)) + minPause;
       const pauseMs = minutesPause * 60 * 1000;
 
-      // Mostra status de pausa
+      // Atualiza status
       document.getElementById("status").innerText = `⏸️ Pausado por ~${minutesPause} minuto(s)...`;
 
       // Remove player
       document.getElementById("player").innerHTML = "";
 
-      // Após a pausa, inicia nova sessão
+      // Inicia nova sessão após pausa
       clearTimeout(timeoutId);
       timeoutId = setTimeout(startViewingSession, pauseMs);
     }
